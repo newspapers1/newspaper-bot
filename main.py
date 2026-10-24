@@ -137,11 +137,17 @@ async def btn(update, ctx):
         await download_send(ctx.application, ctx.user_data['paper'], ctx.user_data['city'], date, q.message.chat_id)
 
 async def start(update, ctx):
-    papers=load_papers(); names=sorted(set([p['name'] for p in papers]))
-    kb=[[InlineKeyboardButton(n, callback_data=f"paper:{n}")] for n in names[:20]]
-    await update.message.reply_text("👋 **6 AM Bot Ready**\n\n/select - Alag-alag ya Sab select karo\n/mylist - Meri list dekho\n/autocustom - 6 AM pe sirf meri list bhejo\n/settings - Channel/Group/Bot set karo\n/get - Date wise lena", reply_markup=InlineKeyboardMarkup(kb), parse_mode='Markdown')
-
-async def select_cmd(update, ctx): await show_select_page(update, ctx, 0)
+    papers=load_papers()
+    if not papers:
+        await update.message.reply_text("❌ No papers found! /select try karo")
+        return
+    # Fix: support both list of strings and list of dicts
+    if isinstance(papers[0], dict):
+        names=sorted(set([p.get('name','') for p in papers if p.get('name')]))
+    else:
+        names=sorted(set(papers))
+    kb=[[InlineKeyboardButton(n, callback_data=f"paper:{n}") for n in names[:20]]]
+    await update.message.reply_text("👋 **6 AM Bot Ready**\n\n/select - Alag-alag ya Sab select karo\n/mylist - Meri list dekho\n/autocustom - 6 AM pe sirf meri list", reply_markup=InlineKeyboardMarkup(kb))async def select_cmd(update, ctx): await show_select_page(update, ctx, 0)
 async def mylist_cmd(update, ctx):
     c=load_custom(); papers=load_papers()
     if not c: await update.message.reply_text("❌ Empty. /select se banao"); return
