@@ -49,26 +49,47 @@ def save_custom(d): json.dump(d, open(CUSTOM_FILE,'w'))
 def get_mode(): return open(POST_MODE_FILE).read().strip() if os.path.exists(POST_MODE_FILE) else os.environ.get("POST_MODE","channel")
 def save_mode(m): open(POST_MODE_FILE,'w').write(m)
 
-# Old: papers = json.load(open("all_papers.json"))
-# New:
-with open("all_papers.json", "r", encoding="utf-8") as f:
-    raw = json.load(f)
-    if "languages" in raw:
-        PAPERS_BY_LANGUAGE = raw["languages"]
-        # flat list for old code compatibility
-        ALL_PAPERS = {}
-        for lang_data in PAPERS_BY_LANGUAGE.values():
-            ALL_PAPERS.update(lang_data)
-    else:
-        ALL_PAPERS = raw
-        PAPERS_BY_LANGUAGE = {"hindi": raw, "english": raw}
-        elif mode=="bot": await app.bot.send_document(uid, data, filename=fname, caption=cap, parse_mode='Markdown')
+# --- NEW ALL LANGUAGES LOADER - FIXED ---
+def load_papers():
+    try:
+        with open("all_papers.json", "r", encoding="utf-8") as f:
+            raw = json.load(f)
+            if "languages" in raw:
+                flat = {}
+                for lang_data in raw["languages"].values():
+                    flat.update(lang_data)
+                return flat
+            return raw
+    except Exception as e:
+        print(f"Error loading papers: {e}")
+        return {}
+
+def load_languages():
+    try:
+        with open("all_papers.json", "r", encoding="utf-8") as f:
+            raw = json.load(f)
+            return raw.get("languages", {})
+    except:
+        return {}
+
+# Load at startup
+PAPERS_BY_LANGUAGE = load_languages()
+ALL_PAPERS = load_papers()
+# --- LOADER END ---
+
+async def send_file_safe(app, uid, data, fname, cap):
+    try:
+        await app.bot.send_document(chat_id=uid, document=data, filename=fname, caption=cap, parse_mode='Markdown')
+        return True
     except Exception as e:
         print(f"Send error: {e}")
-        if uid: 
-            try: await app.bot.send_document(uid, data, filename=fname, caption=cap, parse_mode='Markdown')
-            except: pass
+        try:
+            await app.bot.send_document(chat_id=uid, document=data, filename=fname, caption=cap, parse_mode='Markdown')
+        except:
+            pass
+        return False
 
+async def download_send(app, name, city, date, uid=None):
 async def download_send(app, name, city, date, uid=None):
     papers=load_papers()
     t=next((p for p in papers if p['name'].lower()==name.lower() and p['city'].lower()==city.lower()), None)
