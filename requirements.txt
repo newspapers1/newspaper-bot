@@ -1,5 +1,6 @@
-python-telegram-bot==20.7
-apscheduler
-pytz
-requests
-beautifulsoup4
+    python-telegram-bot==20.8
+    apscheduler==3.10.4
+    pytz
+    requests
+    beautifulsoup4
+    lxml
