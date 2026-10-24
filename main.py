@@ -43,8 +43,11 @@ async def send_dest(app, data, fname, cap, uid):
             await app.bot.send_document(CHANNEL_ID, data, filename=fname, caption=cap, parse_mode='Markdown')
             if GROUP_ID: await asyncio.sleep(2); await app.bot.send_document(GROUP_ID, data, filename=fname, caption=cap, parse_mode='Markdown')
         elif mode=="bot": await app.bot.send_document(uid, data, filename=fname, caption=cap, parse_mode='Markdown')
-    except: 
-        if uid: await app.bot.send_document(uid, data, filename=fname, caption=cap, parse_mode='Markdown')
+    except Exception as e:
+        print(f"Send error: {e}")
+        if uid: 
+            try: await app.bot.send_document(uid, data, filename=fname, caption=cap, parse_mode='Markdown')
+            except: pass
 
 async def download_send(app, name, city, date, uid=None):
     papers=load_papers()
@@ -57,7 +60,9 @@ async def download_send(app, name, city, date, uid=None):
         if len(d)<10000: return False
         await send_dest(app, d, f"{name}-{city}-{date}.pdf", f"📰 {name}\n📍 {city}\n📅 {date}", uid)
         return True
-    except: return False
+    except Exception as e:
+        print(f"Download error {name}: {e}")
+        return False
 
 async def show_select_page(q, ctx, page):
     papers=load_papers(); custom=load_custom(); per=10; st=page*per; sl=papers[st:st+per]
@@ -100,18 +105,17 @@ async def btn(update, ctx):
     elif d.startswith("date:"):
         date=d.split(":")[1]; await q.edit_message_text(f"⏳ {ctx.user_data['paper']} - {ctx.user_data['city']} - {date}")
         await download_send(ctx.application, ctx.user_data['paper'], ctx.user_data['city'], date, q.message.chat_id)
-        await q.edit_message_text(f"✅ Bhej diya Mode: {get_mode()}")
 
 async def start(update, ctx):
     papers=load_papers(); names=sorted(set([p['name'] for p in papers]))
-    kb=[[InlineKeyboardButton(n, callback_data=f"paper:{n}")] for n in names]
+    kb=[[InlineKeyboardButton(n, callback_data=f"paper:{n}")] for n in names[:20]]
     await update.message.reply_text("👋 **6 AM Bot Ready**\n\n/select - Alag-alag ya Sab select karo\n/mylist - Meri list dekho\n/autocustom - 6 AM pe sirf meri list bhejo\n/settings - Channel/Group/Bot set karo\n/get - Date wise lena", reply_markup=InlineKeyboardMarkup(kb), parse_mode='Markdown')
 
 async def select_cmd(update, ctx): await show_select_page(update, ctx, 0)
 async def mylist_cmd(update, ctx):
     c=load_custom(); papers=load_papers()
     if not c: await update.message.reply_text("❌ Empty. /select se banao"); return
-    txt="📋 Selected:\n"+"\n".join([f"• {next(p['name']+' - '+p['city'] for p in papers if p['id']==x)}" for x in c])
+    txt="📋 Selected:\n"+"\n".join([f"• {next((p['name']+' - '+p['city'] for p in papers if p['id']==x), x)}" for x in c])
     await update.message.reply_text(txt)
 async def settings_cmd(update, ctx):
     kb=[[InlineKeyboardButton("📢 Only Channel", callback_data="mode:channel")],[InlineKeyboardButton("👥 Only Group", callback_data="mode:group")],[InlineKeyboardButton("📢+👥 Channel+Group", callback_data="mode:channel_group")],[InlineKeyboardButton("🤖 Only Bot", callback_data="mode:bot")]]
@@ -135,13 +139,21 @@ async def auto_job(app):
         await asyncio.sleep(3)
 
 def main():
+    if not BOT_TOKEN:
+        print("BOT_TOKEN missing!")
+        return
     app=Application.builder().token(BOT_TOKEN).build()
     for cmd, fn in [("start",start),("select",select_cmd),("mylist",mylist_cmd),("settings",settings_cmd),("mode",settings_cmd),("autocustom",autocustom_cmd),("get",get_cmd)]:
         app.add_handler(CommandHandler(cmd, fn))
     app.add_handler(CallbackQueryHandler(btn))
-    sch=AsyncIOScheduler(timezone=pytz.timezone('Asia/Kolkata'))
-    sch.add_job(lambda: auto_job(app), 'cron', hour=6, minute=0)
-    sch.start()
+
+    scheduler = AsyncIOScheduler(timezone=pytz.timezone('Asia/Kolkata'))
+    async def job_wrapper():
+        await auto_job(app)
+    scheduler.add_job(job_wrapper, 'cron', hour=6, minute=0)
+    scheduler.start()
+
     print("READY 6 AM - CUSTOM SELECT - 4 MODES")
     app.run_polling()
+
 if __name__=='__main__': main()
