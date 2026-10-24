@@ -1,91 +1,69 @@
-# FULL PAPERS DATABASE - All Languages + All Cities
-PAPERS_BY_LANGUAGE = {
-
+{
+  "languages": {
     "english": {
-        "The Hindu": ["Delhi", "Chennai", "Mumbai", "Kolkata", "Hyderabad", "Bangalore", "Kochi", "Coimbatore", "Madurai", "Vijayawada", "Visakhapatnam", "Thiruvananthapuram", "Tiruchi", "Hubballi", "Mangalore", "Mohali"],
-        "The Hindu Business Line": ["Delhi", "Chennai", "Mumbai", "Kolkata", "Bangalore", "Hyderabad", "Kochi", "Ahmedabad"],
-        "Times of India": ["Delhi", "Mumbai", "Bangalore", "Chennai", "Kolkata", "Hyderabad", "Pune", "Lucknow", "Patna", "Jaipur", "Ahmedabad", "Chandigarh", "Bhopal", "Nagpur", "Goa", "Bhubaneswar", "Kanpur", "Varanasi", "Guwahati", "Kochi", "Ludhiana"],
-        "Hindustan Times": ["Delhi", "Mumbai", "Chandigarh", "Lucknow", "Patna", "Jaipur", "Bhopal"],
-        "Indian Express": ["Delhi", "Mumbai", "Pune", "Chandigarh", "Lucknow", "Kolkata", "Ahmedabad", "Jaipur", "Nagpur"],
-        "Economic Times": ["Delhi", "Mumbai", "Bangalore", "Chennai", "Kolkata", "Hyderabad", "Pune", "Ahmedabad", "Chandigarh", "Jaipur", "Kochi"],
-        "Deccan Chronicle": ["Hyderabad", "Chennai", "Bangalore", "Kochi", "Vijayawada"],
-        "The Telegraph": ["Kolkata", "Bhubaneswar"],
-        "Deccan Herald": ["Bangalore", "Delhi"],
-        "Mint": ["Delhi", "Mumbai", "Bangalore", "Chennai", "Kolkata"],
+      "The Hindu": ["Delhi", "Chennai", "Mumbai", "Kolkata", "Hyderabad", "Bangalore", "Kochi", "Coimbatore", "Madurai", "Vijayawada", "Visakhapatnam", "Thiruvananthapuram", "Tiruchi", "Hubballi", "Mangalore", "Mohali"],
+      "The Hindu Business Line": ["Delhi", "Chennai", "Mumbai", "Kolkata", "Bangalore", "Hyderabad", "Kochi", "Ahmedabad"],
+      "Times of India": ["Delhi", "Mumbai", "Bangalore", "Chennai", "Kolkata", "Hyderabad", "Pune", "Lucknow", "Patna", "Jaipur", "Ahmedabad", "Chandigarh", "Bhopal", "Nagpur", "Goa", "Bhubaneswar", "Kanpur", "Varanasi", "Guwahati", "Kochi"],
+      "Hindustan Times": ["Delhi", "Mumbai", "Chandigarh", "Lucknow", "Patna", "Jaipur"],
+      "Indian Express": ["Delhi", "Mumbai", "Pune", "Chandigarh", "Lucknow", "Kolkata", "Ahmedabad", "Jaipur"],
+      "Economic Times": ["Delhi", "Mumbai", "Bangalore", "Chennai", "Kolkata", "Hyderabad", "Pune", "Ahmedabad", "Chandigarh"],
+      "Mint": ["Delhi", "Mumbai", "Bangalore", "Chennai", "Kolkata"],
+      "Deccan Chronicle": ["Hyderabad", "Chennai", "Bangalore"],
+      "The Telegraph": ["Kolkata"]
     },
-
     "hindi": {
-        "Dainik Jagran": ["Delhi", "Patna", "Lucknow", "Kanpur", "Varanasi", "Gorakhpur", "Prayagraj", "Meerut", "Agra", "Bareilly", "Muzaffarpur", "Bhagalpur", "Gaya", "Ranchi", "Dhanbad", "Jamshedpur", "Dehradun", "Haldwani", "Ludhiana", "Jalandhar", "Panipat", "Rewa", "Ayodhya", "Bokaro", "Hisar"],
-        "Dainik Bhaskar": ["Jaipur", "Bhopal", "Indore", "Raipur", "Bilaspur", "Nagpur", "Jabalpur", "Udaipur", "Jodhpur", "Kota", "Ajmer", "Gwalior", "Chandigarh", "Panipat", "Hisar", "Patna", "Bhagalpur", "Bilaspur", "Dhanbad"],
-        "Amar Ujala": ["Delhi", "Lucknow", "Kanpur", "Meerut", "Agra", "Bareilly", "Moradabad", "Varanasi", "Prayagraj", "Gorakhpur", "Dehradun", "Haldwani", "Jammu", "Chandigarh", "Shimla", "Dharamshala", "Aligarh"],
-        "Hindustan": ["Delhi", "Patna", "Lucknow", "Kanpur", "Varanasi", "Gorakhpur", "Muzaffarpur", "Bhagalpur", "Gaya", "Ranchi", "Dhanbad", "Jamshedpur", "Dehradun", "Moradabad"],
-        "Prabhat Khabar": ["Patna", "Ranchi", "Jamshedpur", "Dhanbad", "Deoghar", "Muzaffarpur", "Bhagalpur", "Gaya", "Kolkata"],
-        "Navbharat Times": ["Delhi", "Mumbai", "Lucknow", "Patna", "Kanpur"],
-        "Rajasthan Patrika": ["Jaipur", "Udaipur", "Jodhpur", "Kota", "Bikaner", "Ajmer", "Bhopal", "Indore", "Raipur", "Chandigarh"],
-        "Punjab Kesari": ["Delhi", "Jalandhar", "Ludhiana", "Chandigarh", "Haryana", "Himachal"],
-        "Jansatta": ["Delhi", "Kolkata", "Chandigarh", "Lucknow"],
+      "Dainik Jagran": ["Delhi", "Patna", "Lucknow", "Kanpur", "Varanasi", "Gorakhpur", "Prayagraj", "Meerut", "Agra", "Bareilly", "Muzaffarpur", "Bhagalpur", "Gaya", "Ranchi", "Dhanbad", "Jamshedpur", "Dehradun", "Haldwani", "Ludhiana", "Jalandhar", "Panipat", "Rewa", "Ayodhya", "Bokaro"],
+      "Dainik Bhaskar": ["Jaipur", "Bhopal", "Indore", "Raipur", "Bilaspur", "Nagpur", "Jabalpur", "Udaipur", "Jodhpur", "Kota", "Ajmer", "Gwalior", "Chandigarh", "Panipat", "Hisar", "Patna", "Bhagalpur"],
+      "Amar Ujala": ["Delhi", "Lucknow", "Kanpur", "Meerut", "Agra", "Bareilly", "Moradabad", "Varanasi", "Prayagraj", "Gorakhpur", "Dehradun", "Haldwani", "Jammu", "Chandigarh", "Shimla"],
+      "Hindustan": ["Delhi", "Patna", "Lucknow", "Kanpur", "Varanasi", "Gorakhpur", "Muzaffarpur", "Bhagalpur", "Gaya", "Ranchi", "Dhanbad", "Jamshedpur", "Dehradun"],
+      "Prabhat Khabar": ["Patna", "Ranchi", "Jamshedpur", "Dhanbad", "Deoghar", "Muzaffarpur", "Bhagalpur", "Gaya", "Kolkata"],
+      "Navbharat Times": ["Delhi", "Mumbai", "Lucknow", "Patna"],
+      "Rajasthan Patrika": ["Jaipur", "Udaipur", "Jodhpur", "Kota", "Bikaner", "Ajmer", "Bhopal", "Indore", "Raipur"],
+      "Punjab Kesari": ["Delhi", "Jalandhar", "Ludhiana", "Chandigarh", "Haryana"],
+      "Jansatta": ["Delhi", "Kolkata", "Chandigarh", "Lucknow"]
     },
-
     "punjabi": {
-        "Ajit": ["Jalandhar", "Ludhiana", "Chandigarh", "Amritsar", "Bathinda", "Patiala"],
-        "Jagbani": ["Jalandhar", "Ludhiana", "Amritsar", "Chandigarh"],
-        "Punjabi Tribune": ["Chandigarh", "Amritsar", "Jalandhar", "Bathinda", "Ludhiana"],
-        "Punjab Kesari Punjabi": ["Jalandhar", "Chandigarh"],
+      "Ajit": ["Jalandhar", "Ludhiana", "Chandigarh", "Amritsar", "Bathinda", "Patiala"],
+      "Jagbani": ["Jalandhar", "Ludhiana", "Amritsar", "Chandigarh"],
+      "Punjabi Tribune": ["Chandigarh", "Amritsar", "Jalandhar", "Bathinda", "Ludhiana"]
     },
-
     "marathi": {
-        "Loksatta": ["Mumbai", "Pune", "Nagpur", "Ahmednagar", "Aurangabad"],
-        "Lokmat": ["Mumbai", "Pune", "Nagpur", "Aurangabad", "Nashik", "Kolhapur", "Sambhajinagar", "Ahmednagar"],
-        "Sakal": ["Pune", "Mumbai", "Kolhapur", "Nagpur", "Nashik", "Aurangabad"],
-        "Maharashtra Times": ["Mumbai", "Pune", "Nagpur", "Thane"],
-        "Pudhari": ["Kolhapur", "Pune", "Sangli", "Satara"],
+      "Loksatta": ["Mumbai", "Pune", "Nagpur", "Ahmednagar", "Aurangabad"],
+      "Lokmat": ["Mumbai", "Pune", "Nagpur", "Aurangabad", "Nashik", "Kolhapur", "Sambhajinagar"],
+      "Sakal": ["Pune", "Mumbai", "Kolhapur", "Nagpur", "Nashik", "Aurangabad"],
+      "Maharashtra Times": ["Mumbai", "Pune", "Nagpur"],
+      "Pudhari": ["Kolhapur", "Pune", "Sangli"]
     },
-
     "gujarati": {
-        "Gujarat Samachar": ["Ahmedabad", "Vadodara", "Surat", "Rajkot", "Bhavnagar", "Mumbai", "Bhuj"],
-        "Divya Bhaskar": ["Ahmedabad", "Vadodara", "Surat", "Rajkot", "Bhavnagar"],
-        "Sandesh": ["Ahmedabad", "Vadodara", "Surat", "Rajkot", "Bhuj", "Bhavnagar"],
+      "Gujarat Samachar": ["Ahmedabad", "Vadodara", "Surat", "Rajkot", "Bhavnagar", "Mumbai", "Bhuj"],
+      "Divya Bhaskar": ["Ahmedabad", "Vadodara", "Surat", "Rajkot", "Bhavnagar"],
+      "Sandesh": ["Ahmedabad", "Vadodara", "Surat", "Rajkot", "Bhuj"]
     },
-
     "bengali": {
-        "Anandabazar Patrika": ["Kolkata", "Bardhaman", "Siliguri", "Midnapore"],
-        "Bartaman": ["Kolkata", "Siliguri", "Bardhaman"],
-        "Ei Samay": ["Kolkata"],
+      "Anandabazar Patrika": ["Kolkata", "Bardhaman", "Siliguri"],
+      "Bartaman": ["Kolkata", "Siliguri", "Bardhaman"],
+      "Ei Samay": ["Kolkata"]
     },
-
     "tamil": {
-        "Daily Thanthi": ["Chennai", "Coimbatore", "Madurai", "Trichy", "Salem", "Tirunelveli", "Vellore", "Erode"],
-        "Dinamalar": ["Chennai", "Coimbatore", "Madurai", "Trichy", "Salem"],
-        "The Hindu Tamil": ["Chennai", "Coimbatore", "Madurai"],
+      "Daily Thanthi": ["Chennai", "Coimbatore", "Madurai", "Trichy", "Salem", "Tirunelveli"],
+      "Dinamalar": ["Chennai", "Coimbatore", "Madurai", "Trichy"],
+      "The Hindu Tamil": ["Chennai", "Coimbatore", "Madurai"]
     },
-
     "telugu": {
-        "Eenadu": ["Hyderabad", "Vijayawada", "Visakhapatnam", "Tirupati", "Warangal", "Rajahmundry", "Kurnool", "Guntur"],
-        "Sakshi": ["Hyderabad", "Vijayawada", "Visakhapatnam", "Tirupati"],
+      "Eenadu": ["Hyderabad", "Vijayawada", "Visakhapatnam", "Tirupati", "Warangal", "Rajahmundry", "Kurnool", "Guntur"],
+      "Sakshi": ["Hyderabad", "Vijayawada", "Visakhapatnam", "Tirupati"]
     },
-
     "malayalam": {
-        "Malayala Manorama": ["Kochi", "Kozhikode", "Thiruvananthapuram", "Kottayam", "Thrissur", "Kannur", "Kollam"],
-        "Mathrubhumi": ["Kozhikode", "Kochi", "Thiruvananthapuram", "Kottayam", "Kannur", "Thrissur"],
+      "Malayala Manorama": ["Kochi", "Kozhikode", "Thiruvananthapuram", "Kottayam", "Thrissur", "Kannur"],
+      "Mathrubhumi": ["Kozhikode", "Kochi", "Thiruvananthapuram", "Kottayam", "Kannur"]
     },
-
     "kannada": {
-        "Vijaya Karnataka": ["Bangalore", "Mysore", "Hubballi", "Mangaluru", "Belagavi", "Kalaburagi"],
-        "Prajavani": ["Bangalore", "Hubballi", "Mangaluru", "Mysore"],
+      "Vijaya Karnataka": ["Bangalore", "Mysore", "Hubballi", "Mangaluru", "Belagavi"],
+      "Prajavani": ["Bangalore", "Hubballi", "Mangaluru", "Mysore"]
     },
-
     "urdu": {
-        "Inquilab": ["Mumbai", "Delhi", "Lucknow", "Patna"],
-        "Siasat": ["Hyderabad", "Delhi"],
+      "Inquilab": ["Mumbai", "Delhi", "Lucknow", "Patna"],
+      "Siasat": ["Hyderabad", "Delhi"]
     }
+  }
 }
-
-# All languages list for /language command
-LANGUAGES_LIST = list(PAPERS_BY_LANGUAGE.keys())
-
-def get_all_papers_flat():
-    flat = {}
-    for lang, papers in PAPERS_BY_LANGUAGE.items():
-        for paper, cities in papers.items():
-            flat[f"{paper}"] = cities
-    return flat
