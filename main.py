@@ -172,19 +172,22 @@ def main():
     if not BOT_TOKEN:
         print("BOT_TOKEN missing!")
         return
-    app=Application.builder().token(BOT_TOKEN).build()
+
+    app = Application.builder().token(BOT_TOKEN).build()
+
     for cmd, fn in [("start",start),("select",select_cmd),("mylist",mylist_cmd),("settings",settings_cmd),("mode",settings_cmd),("autocustom",autocustom_cmd),("get",get_cmd)]:
         app.add_handler(CommandHandler(cmd, fn))
     app.add_handler(CallbackQueryHandler(btn))
 
     scheduler = AsyncIOScheduler(timezone=pytz.timezone('Asia/Kolkata'))
+
     async def job_wrapper():
         await auto_job(app)
+
     scheduler.add_job(job_wrapper, 'cron', hour=6, minute=0)
     scheduler.start()
 
-       print("READY 6 AM - CUSTOM SELECT - 4 MODES")
-
+    print("READY 6 AM - CUSTOM SELECT - 4 MODES")
     app.run_polling(drop_pending_updates=True)
 
 if __name__=='__main__':
