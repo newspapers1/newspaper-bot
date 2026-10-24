@@ -183,8 +183,9 @@ def main():
     scheduler.add_job(job_wrapper, 'cron', hour=6, minute=0)
     scheduler.start()
 
-    print("READY 6 AM - CUSTOM SELECT - 4 MODES")
-   await app.bot.delete_webhook(drop_pending_updates=True)
-app.run_polling(drop_pending_updates=True, allowed_updates=Update.ALL_TYPES)
+       print("READY 6 AM - CUSTOM SELECT - 4 MODES")
 
-if __name__=='__main__': main()
+    app.run_polling(drop_pending_updates=True)
+
+if __name__=='__main__':
+    main()
