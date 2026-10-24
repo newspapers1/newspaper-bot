@@ -37,27 +37,19 @@ def save_custom(d): json.dump(d, open(CUSTOM_FILE,'w'))
 def get_mode(): return open(POST_MODE_FILE).read().strip() if os.path.exists(POST_MODE_FILE) else os.environ.get("POST_MODE","channel")
 def save_mode(m): open(POST_MODE_FILE,'w').write(m)
 
-def find_pdf(pid):
-    try:
-        s=requests.Session(); s.get(ACCESS, headers={'User-Agent':'Mozilla/5.0'}, timeout=10)
-        r=s.get(f"https://www.tradingref.com/{pid}", headers={'User-Agent':'Mozilla/5.0'}, timeout=20)
-        soup=BeautifulSoup(r.text,'html.parser')
-        for a in soup.find_all('a', href=True):
-            if '.pdf' in a['href']:
-                link=a['href']
-                if not link.startswith('http'): link="https://www.tradingref.com"+link
-                return link,s
-    except: pass
-    return None,None
-
-async def send_dest(app, data, fname, cap, uid):
-    mode=get_mode()
-    try:
-        if mode=="channel": await app.bot.send_document(CHANNEL_ID, data, filename=fname, caption=cap, parse_mode='Markdown')
-        elif mode=="group": await app.bot.send_document(GROUP_ID if GROUP_ID else uid, data, filename=fname, caption=cap, parse_mode='Markdown')
-        elif mode=="channel_group":
-            await app.bot.send_document(CHANNEL_ID, data, filename=fname, caption=cap, parse_mode='Markdown')
-            if GROUP_ID: await asyncio.sleep(2); await app.bot.send_document(GROUP_ID, data, filename=fname, caption=cap, parse_mode='Markdown')
+# Old: papers = json.load(open("all_papers.json"))
+# New:
+with open("all_papers.json", "r", encoding="utf-8") as f:
+    raw = json.load(f)
+    if "languages" in raw:
+        PAPERS_BY_LANGUAGE = raw["languages"]
+        # flat list for old code compatibility
+        ALL_PAPERS = {}
+        for lang_data in PAPERS_BY_LANGUAGE.values():
+            ALL_PAPERS.update(lang_data)
+    else:
+        ALL_PAPERS = raw
+        PAPERS_BY_LANGUAGE = {"hindi": raw, "english": raw}
         elif mode=="bot": await app.bot.send_document(uid, data, filename=fname, caption=cap, parse_mode='Markdown')
     except Exception as e:
         print(f"Send error: {e}")
