@@ -30,7 +30,19 @@ AUTOCUSTOM_FILE="autocustom.txt"
 ACCESS="https://www.tradingref.com/?accesstoken=pip0zIKMysJvmhu4y1KMx2KNxK=="
 
 def load_papers():
-    with open('all_papers.json','r') as f: return json.load(f)
+    with open('all_papers.json','r', encoding='utf-8') as f:
+        raw = json.load(f)
+        if "languages" in raw:
+            flat = {}
+            for lang_data in raw["languages"].values():
+                flat.update(lang_data)
+            return flat
+        return raw
+
+def load_languages():
+    with open('all_papers.json','r', encoding='utf-8') as f:
+        raw = json.load(f)
+        return raw.get("languages", {"all": raw})
 def load_custom():
     return json.load(open(CUSTOM_FILE)) if os.path.exists(CUSTOM_FILE) else []
 def save_custom(d): json.dump(d, open(CUSTOM_FILE,'w'))
