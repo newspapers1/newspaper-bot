@@ -2,29 +2,20 @@ import os
 from threading import Thread
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-# --- RENDER PORT FIX - ISKO MAT HATANA ---
+# --- RENDER PORT FIX - SINGLE ---
 def keep_alive():
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
-            self.send_response(200); self.end_headers(); self.wfile.write(b"Bot is Live - All Papers Active")
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"Bot is Live - All Papers Active")
         def log_message(self, *a): pass
     port = int(os.environ.get("PORT", 10000))
+    print(f"Dummy server on {port}")
     HTTPServer(("0.0.0.0", port), Handler).serve_forever()
 
 Thread(target=keep_alive, daemon=True).start()
-# --- FIX KHATAM ---
-import os, json, requests, pytz, asyncio, re
-from threading import Thread
-from http.server import HTTPServer, BaseHTTPRequestHandler
-import os
-
-class Handler(BaseHTTPRequestHandler):
-    def do_GET(self): self.send_response(200); self.end_headers(); self.wfile.write(b'Bot Running')
-def run_server():
-    port = int(os.environ.get("PORT", 10000))
-    HTTPServer(('0.0.0.0', port), Handler).serve_forever()
-Thread(target=run_server, daemon=True).start()
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+# --- FIX END ---
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime
