@@ -184,6 +184,7 @@ def main():
     scheduler.start()
 
     print("READY 6 AM - CUSTOM SELECT - 4 MODES")
-    app.run_polling()
+   await app.bot.delete_webhook(drop_pending_updates=True)
+app.run_polling(drop_pending_updates=True, allowed_updates=Update.ALL_TYPES)
 
 if __name__=='__main__': main()
