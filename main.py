@@ -1,3 +1,5 @@
+import threading
+from flask import Flask
 import os
 import json
 import datetime
@@ -116,5 +118,13 @@ def main():
     scheduler.start()
     print("READY 6 AM - CUSTOM SELECT - 4 MODES")
     app.run_polling(drop_pending_updates=True)
-
+# --- Render FREE Web Service ke liye Dummy Server ---
+flask_app = Flask(__name__)
+@flask_app.route('/')
+def home(): return "Bot is Live - 6 AM Ready"
+def run_flask():
+    port = int(os.environ.get("PORT", 10000))
+    flask_app.run(host="0.0.0.0", port=port)
+threading.Thread(target=run_flask, daemon=True).start()
+# --- End Dummy Server ---
 if __name__=='__main__': main()
