@@ -1,4 +1,14 @@
 import os, json, requests, pytz, asyncio, re
+from threading import Thread
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import os
+
+class Handler(BaseHTTPRequestHandler):
+    def do_GET(self): self.send_response(200); self.end_headers(); self.wfile.write(b'Bot Running')
+def run_server():
+    port = int(os.environ.get("PORT", 10000))
+    HTTPServer(('0.0.0.0', port), Handler).serve_forever()
+Thread(target=run_server, daemon=True).start()
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
