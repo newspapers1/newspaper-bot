@@ -76,21 +76,8 @@ def load_languages():
 PAPERS_BY_LANGUAGE = load_languages()
 ALL_PAPERS = load_papers()
 # --- LOADER END ---
-
-async def send_file_safe(app, uid, data, fname, cap):
-    try:
-        await app.bot.send_document(chat_id=uid, document=data, filename=fname, caption=cap, parse_mode='Markdown')
-        return True
-    except Exception as e:
-        print(f"Send error: {e}")
-        try:
-            await app.bot.send_document(chat_id=uid, document=data, filename=fname, caption=cap, parse_mode='Markdown')
-        except:
-            pass
-        return False
-
 async def download_send(app, name, city, date, uid=None):
-async def download_send(app, name, city, date, uid=None):
+
     papers=load_papers()
     t=next((p for p in papers if p['name'].lower()==name.lower() and p['city'].lower()==city.lower()), None)
     if not t: return False
@@ -102,7 +89,7 @@ async def download_send(app, name, city, date, uid=None):
         await send_dest(app, d, f"{name}-{city}-{date}.pdf", f"📰 {name}\n📍 {city}\n📅 {date}", uid)
         return True
     except Exception as e:
-        print(f"Download error {name}: {e}")
+       
         return False
 
 async def show_select_page(q, ctx, page):
