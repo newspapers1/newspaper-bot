@@ -1,3 +1,18 @@
+import os
+from threading import Thread
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+# --- RENDER PORT FIX - ISKO MAT HATANA ---
+def keep_alive():
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200); self.end_headers(); self.wfile.write(b"Bot is Live - All Papers Active")
+        def log_message(self, *a): pass
+    port = int(os.environ.get("PORT", 10000))
+    HTTPServer(("0.0.0.0", port), Handler).serve_forever()
+
+Thread(target=keep_alive, daemon=True).start()
+# --- FIX KHATAM ---
 import os, json, requests, pytz, asyncio, re
 from threading import Thread
 from http.server import HTTPServer, BaseHTTPRequestHandler
