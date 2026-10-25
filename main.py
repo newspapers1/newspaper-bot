@@ -81,7 +81,18 @@ async def handle_all(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         kb=[[InlineKeyboardButton(f"📰 {n}", callback_data=f"paper_{n}")] for n in names]
         await q.edit_message_text(f"Paper chuno - Abhi + Auto dono milega:", reply_markup=InlineKeyboardMarkup(kb))
 
-    elif data.startswith("paper_"):
+        elif data.startswith("lang_"):
+        lang=data.replace("lang_","",1)
+        if lang=="All": 
+            filtered=sorted(set([p["name"] for p in papers]))
+        else: 
+            filtered=sorted(set([p["name"] for p in papers if p["lang"]==lang]))
+        kb=[[InlineKeyboardButton(f"📰 {n}", callback_data=f"paper_{n}")] for n in filtered]
+        kb.append([InlineKeyboardButton("🔙 Back", callback_data="menu_select")])
+        try:
+            await q.edit_message_text(f"🌐 *{lang} Papers - {len(filtered)} found:*\nNiche se select karo:", reply_markup=InlineKeyboardMarkup(kb), parse_mode=ParseMode.MARKDOWN)
+        except:
+            await q.message.reply_text(f"🌐 *{lang} Papers - {len(filtered)} found:*", reply_markup=InlineKeyboardMarkup(kb), parse_mode=ParseMode.MARKDOWN)
         pname=data.replace("paper_","",1)
         ctx.user_data["paper"]=pname
         cities=sorted(set([p["city"] for p in papers if p["name"]==pname]))
