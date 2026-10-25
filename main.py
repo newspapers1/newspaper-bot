@@ -24,10 +24,10 @@ default_config={"mode":"channel+group"}
 BASE_PAPERS=[
     {"name":"The Hindu","lang":"English","cities":["Delhi","Chennai","Mumbai","Patna"]},
     {"name":"The Hindu Business Line","lang":"English","cities":["Delhi","Chennai","Mumbai"]},
-    {"name":"Times of India","lang":"English","cities":["Delhi","Mumbai","Patna","Lucknow"]},
-    {"name":"Dainik Jagran","lang":"Hindi","cities":["Patna","Delhi","Lucknow","Kanpur","Varanasi"]},
-    {"name":"Dainik Bhaskar","lang":"Hindi","cities":["Patna","Bhopal","Jaipur","Delhi"]},
-    {"name":"Hindustan","lang":"Hindi","cities":["Patna","Delhi","Lucknow","Ranchi"]},
+    {"name":"Times of India","lang":"English","cities":["Delhi","Mumbai","Patna"]},
+    {"name":"Dainik Jagran","lang":"Hindi","cities":["Patna","Delhi","Lucknow","Kanpur"]},
+    {"name":"Dainik Bhaskar","lang":"Hindi","cities":["Patna","Bhopal","Jaipur"]},
+    {"name":"Hindustan","lang":"Hindi","cities":["Patna","Delhi","Lucknow"]},
     {"name":"Prabhat Khabar","lang":"Hindi","cities":["Patna","Ranchi"]},
 ]
 
@@ -37,15 +37,21 @@ def get_papers():
         for c in p["cities"]: flat.append({"name":p["name"],"city":c,"lang":p["lang"]})
     return flat
 
+# --- Global Loop - Ye band nahi hoga ---
+loop = asyncio.new_event_loop()
+def start_loop():
+    asyncio.set_event_loop(loop)
+    loop.run_forever()
+threading.Thread(target=start_loop, daemon=True).start()
+
 application = Application.builder().token(BOT_TOKEN).build()
 
 async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     kb=[
         [InlineKeyboardButton("📰 Select Papers", callback_data="menu_select")],
         [InlineKeyboardButton("📋 My List", callback_data="menu_mylist"), InlineKeyboardButton("⚙️ Mode", callback_data="menu_mode")],
-        [InlineKeyboardButton("🇬🇧 English", callback_data="lang_English"), InlineKeyboardButton("🇮🇳 Hindi", callback_data="lang_Hindi")],
     ]
-    await update.message.reply_text("👋 *Bot LIVE - No Error Now!*\n\nHindi+English\nThe Hindu + Business Line ✅\nAaj ka paper + Date ✅", reply_markup=InlineKeyboardMarkup(kb), parse_mode=ParseMode.MARKDOWN)
+    await update.message.reply_text("👋 *Bot LIVE - Final Fixed!*\nNo more loop error!", reply_markup=InlineKeyboardMarkup(kb), parse_mode=ParseMode.MARKDOWN)
 
 async def handle_btn(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     q=update.callback_query
@@ -75,10 +81,6 @@ async def handle_btn(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         if not any(c["name"]==paper and c["city"]==city for c in custom):
             custom.append({"name":paper,"city":city}); save_json(CUSTOM_FILE, custom)
         await q.edit_message_text(f"✅ *{paper} | {city} | {date_str}*\nReady!", parse_mode=ParseMode.MARKDOWN)
-    elif data=="menu_mylist":
-        custom=load_json(CUSTOM_FILE, [])
-        txt="📋 List:\n"+"\n".join([f"• {c['name']} - {c['city']}" for c in custom]) if custom else "Empty"
-        await q.edit_message_text(txt)
 
 application.add_handler(CommandHandler("start", start))
 application.add_handler(CallbackQueryHandler(handle_btn))
@@ -86,16 +88,15 @@ application.add_handler(CallbackQueryHandler(handle_btn))
 flask_app = Flask(__name__)
 
 @flask_app.route('/')
-def home(): return "Bot Live - Webhook Sync Fixed"
+def home(): return "Bot Live - Loop Fixed"
 
-# === YEHI FIX HAI - async nahi, sync hai ===
 @flask_app.route('/webhook', methods=['POST'])
 def webhook():
     try:
         data = request.get_json(force=True)
         update = Update.de_json(data, application.bot)
-        # Sync me async ko chalao - isse wo 500 error khatam!
-        asyncio.run(application.process_update(update))
+        # Loop ko band kiye bina chalao - yahi fix hai!
+        asyncio.run_coroutine_threadsafe(application.process_update(update), loop)
     except Exception as e:
         print(f"Webhook error: {e}")
     return "ok"
@@ -108,10 +109,9 @@ async def init_bot():
         url = f"https://{hostname}/webhook"
         await application.bot.delete_webhook(drop_pending_updates=True)
         await application.bot.set_webhook(url=url)
-        print(f"Webhook FIXED set to {url}")
+        print(f"Webhook FINAL FIXED set to {url}")
 
-def run_init(): asyncio.run(init_bot())
-threading.Thread(target=run_init, daemon=True).start()
+asyncio.run_coroutine_threadsafe(init_bot(), loop)
 
 def daily_job(): print("6 AM Job")
 scheduler = BackgroundScheduler(timezone=IST)
