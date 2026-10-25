@@ -37,7 +37,6 @@ def get_papers():
         for c in p["cities"]: flat.append({"name":p["name"],"city":c,"lang":p["lang"]})
     return flat
 
-# --- BOT APP ---
 application = Application.builder().token(BOT_TOKEN).build()
 
 async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
@@ -46,7 +45,7 @@ async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("📋 My List", callback_data="menu_mylist"), InlineKeyboardButton("⚙️ Mode", callback_data="menu_mode")],
         [InlineKeyboardButton("🇬🇧 English", callback_data="lang_English"), InlineKeyboardButton("🇮🇳 Hindi", callback_data="lang_Hindi")],
     ]
-    await update.message.reply_text("👋 *Bot LIVE - Fixed!*\n\nHindi+English only\nThe Hindu + Business Line ✅\nAaj ka paper + Date select ✅", reply_markup=InlineKeyboardMarkup(kb), parse_mode=ParseMode.MARKDOWN)
+    await update.message.reply_text("👋 *Bot LIVE - No Error Now!*\n\nHindi+English\nThe Hindu + Business Line ✅\nAaj ka paper + Date ✅", reply_markup=InlineKeyboardMarkup(kb), parse_mode=ParseMode.MARKDOWN)
 
 async def handle_btn(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     q=update.callback_query
@@ -75,33 +74,28 @@ async def handle_btn(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         custom=load_json(CUSTOM_FILE, [])
         if not any(c["name"]==paper and c["city"]==city for c in custom):
             custom.append({"name":paper,"city":city}); save_json(CUSTOM_FILE, custom)
-        await q.edit_message_text(f"✅ *{paper} | {city} | {date_str}*\nAaj ka paper ready!", parse_mode=ParseMode.MARKDOWN)
+        await q.edit_message_text(f"✅ *{paper} | {city} | {date_str}*\nReady!", parse_mode=ParseMode.MARKDOWN)
     elif data=="menu_mylist":
         custom=load_json(CUSTOM_FILE, [])
         txt="📋 List:\n"+"\n".join([f"• {c['name']} - {c['city']}" for c in custom]) if custom else "Empty"
         await q.edit_message_text(txt)
-    elif data=="menu_mode":
-        kb=[[InlineKeyboardButton("🤖 Bot", callback_data="mode_bot")],[InlineKeyboardButton("📢 Channel", callback_data="mode_channel")],[InlineKeyboardButton("🚀 Both", callback_data="mode_channel+group")]]
-        await q.edit_message_text("Mode:", reply_markup=InlineKeyboardMarkup(kb))
-    elif data.startswith("mode_"):
-        mode=data.replace("mode_","",1); cfg=load_json(CONFIG_FILE, default_config); cfg["mode"]=mode; save_json(CONFIG_FILE, cfg)
-        await q.edit_message_text(f"✅ Mode {mode}")
 
 application.add_handler(CommandHandler("start", start))
 application.add_handler(CallbackQueryHandler(handle_btn))
 
-# --- FLASK ---
 flask_app = Flask(__name__)
 
 @flask_app.route('/')
-def home(): return "Bot Live - Webhook Fixed"
+def home(): return "Bot Live - Webhook Sync Fixed"
 
+# === YEHI FIX HAI - async nahi, sync hai ===
 @flask_app.route('/webhook', methods=['POST'])
-async def webhook():
+def webhook():
     try:
         data = request.get_json(force=True)
         update = Update.de_json(data, application.bot)
-        await application.process_update(update)
+        # Sync me async ko chalao - isse wo 500 error khatam!
+        asyncio.run(application.process_update(update))
     except Exception as e:
         print(f"Webhook error: {e}")
     return "ok"
@@ -109,7 +103,6 @@ async def webhook():
 async def init_bot():
     await application.initialize()
     await application.start()
-    # Set webhook
     hostname = os.getenv("RENDER_EXTERNAL_HOSTNAME")
     if hostname:
         url = f"https://{hostname}/webhook"
@@ -117,13 +110,9 @@ async def init_bot():
         await application.bot.set_webhook(url=url)
         print(f"Webhook FIXED set to {url}")
 
-# Run init in background
-def run_async_init():
-    asyncio.run(init_bot())
+def run_init(): asyncio.run(init_bot())
+threading.Thread(target=run_init, daemon=True).start()
 
-threading.Thread(target=run_async_init, daemon=True).start()
-
-# Scheduler 6 AM
 def daily_job(): print("6 AM Job")
 scheduler = BackgroundScheduler(timezone=IST)
 scheduler.add_job(daily_job, 'cron', hour=6, minute=0)
