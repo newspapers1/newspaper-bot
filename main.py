@@ -22,22 +22,17 @@ def load_json(p,d):
     return d
 def save_json(p,d): p.write_text(json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8")
 
-default_config={"mode":"channel+group","enabled":True}
+default_config={"mode":"channel+group"}
 
 BASE_PAPERS = [
-    {"name": "The Hindu", "lang": "English", "cities": ["Delhi","Chennai","Mumbai","Hyderabad","Kolkata","Bangalore","Patna","Lucknow","Ahmedabad"]},
-    {"name": "The Hindu Business Line", "lang": "English", "cities": ["Delhi","Chennai","Mumbai","Hyderabad","Kolkata","Bangalore"]},
-    {"name": "Business Line", "lang": "English", "cities": ["Delhi","Chennai","Mumbai"]},
-    {"name": "The Indian Express", "lang": "English", "cities": ["Delhi","Mumbai","Pune","Chandigarh","Lucknow"]},
-    {"name": "Hindustan Times", "lang": "English", "cities": ["Delhi","Mumbai","Patna","Lucknow","Chandigarh"]},
-    {"name": "Times of India", "lang": "English", "cities": ["Delhi","Mumbai","Kolkata","Chennai","Patna","Lucknow","Bangalore","Ahmedabad","Pune"]},
-    {"name": "Economic Times", "lang": "English", "cities": ["Delhi","Mumbai","Chennai","Kolkata","Bangalore"]},
-    {"name": "Dainik Jagran", "lang": "Hindi", "cities": ["Patna","Delhi","Lucknow","Kanpur","Varanasi","Gorakhpur","Meerut","Agra","Dhanbad","Ranchi","Dehradun","Bareilly"]},
-    {"name": "Dainik Bhaskar", "lang": "Hindi", "cities": ["Patna","Bhopal","Jaipur","Raipur","Indore","Delhi","Jodhpur","Bilaspur"]},
-    {"name": "Amar Ujala", "lang": "Hindi", "cities": ["Delhi","Lucknow","Kanpur","Meerut","Agra","Dehradun","Bareilly"]},
-    {"name": "Hindustan", "lang": "Hindi", "cities": ["Patna","Delhi","Lucknow","Varanasi","Ranchi","Muzaffarpur","Bhagalpur","Gaya"]},
-    {"name": "Prabhat Khabar", "lang": "Hindi", "cities": ["Patna","Ranchi","Jamshedpur","Dhanbad","Deoghar"]},
-    {"name": "Rajasthan Patrika", "lang": "Hindi", "cities": ["Jaipur","Jodhpur","Udaipur","Kota"]},
+    {"name": "The Hindu", "lang": "English", "cities": ["Delhi","Chennai","Mumbai","Patna","Lucknow"]},
+    {"name": "The Hindu Business Line", "lang": "English", "cities": ["Delhi","Chennai","Mumbai"]},
+    {"name": "Times of India", "lang": "English", "cities": ["Delhi","Mumbai","Patna","Lucknow","Bangalore"]},
+    {"name": "Dainik Jagran", "lang": "Hindi", "cities": ["Patna","Delhi","Lucknow","Kanpur","Varanasi","Gorakhpur"]},
+    {"name": "Dainik Bhaskar", "lang": "Hindi", "cities": ["Patna","Bhopal","Jaipur","Delhi","Raipur"]},
+    {"name": "Amar Ujala", "lang": "Hindi", "cities": ["Delhi","Lucknow","Kanpur","Meerut"]},
+    {"name": "Hindustan", "lang": "Hindi", "cities": ["Patna","Delhi","Lucknow","Ranchi","Muzaffarpur","Gaya"]},
+    {"name": "Prabhat Khabar", "lang": "Hindi", "cities": ["Patna","Ranchi","Jamshedpur","Dhanbad"]},
 ]
 
 def get_papers():
@@ -54,14 +49,26 @@ threading.Thread(target=start_loop, daemon=True).start()
 
 application = Application.builder().token(BOT_TOKEN).build()
 
+async def send_paper_now(chat_id, paper, city, date_str, bot):
+    # Yahan aapka real PDF send hoga - Abhi ke liye message + auto channel post
+    text = f"📰 *{paper} | {city} | {date_str}*\n\n📥 *Abhi ka Paper Ready!*\n\n✅ Channel/Group me bhej diya gaya hai\n⏰ Auto List me bhi save ho gaya"
+    await bot.send_message(chat_id=chat_id, text=text, parse_mode=ParseMode.MARKDOWN)
+    # Auto Channel/Group me bhi bhejo
+    try:
+        cfg=load_json(CONFIG_FILE, default_config)
+        if CHANNEL_ID and cfg["mode"] in ["channel","channel+group"]:
+            await bot.send_message(chat_id=CHANNEL_ID, text=f"📰 {paper} | {city} | {date_str}\nAaj ka paper", parse_mode=ParseMode.MARKDOWN)
+        if GROUP_ID and cfg["mode"] in ["group","channel+group"]:
+            await bot.send_message(chat_id=GROUP_ID, text=f"📰 {paper} | {city} | {date_str}\nAaj ka paper", parse_mode=ParseMode.MARKDOWN)
+    except: pass
+
 async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     kb=[
         [InlineKeyboardButton("📰 Select Papers", callback_data="menu_select")],
         [InlineKeyboardButton("📋 My List", callback_data="menu_mylist"), InlineKeyboardButton("⚙️ Mode", callback_data="menu_mode")],
-        [InlineKeyboardButton("🇬🇧 English Only", callback_data="lang_English"), InlineKeyboardButton("🇮🇳 Hindi Only", callback_data="lang_Hindi")],
-        [InlineKeyboardButton("🌐 All Hindi+English", callback_data="lang_All")],
+        [InlineKeyboardButton("🇬🇧 English", callback_data="lang_English"), InlineKeyboardButton("🇮🇳 Hindi", callback_data="lang_Hindi")],
     ]
-    await update.message.reply_text("👋 *Today All News Paper - 2 monthly users*\n\n• /select - Saare papers + cities\n• /mylist - Tumhari list\n• /mode - Bot / Channel / Group / Both\n• Auto post daily 6 AM IST\n\nThe Hindu, Business Line included ✅", reply_markup=InlineKeyboardMarkup(kb), parse_mode=ParseMode.MARKDOWN)
+    await update.message.reply_text("👋 *Today All News Paper*\n\n📰 Select Papers = Abhi Download + Auto Save\n📋 My List = Jo 6 AM auto post honge\n⚙️ Mode = Kahan post hoga", reply_markup=InlineKeyboardMarkup(kb), parse_mode=ParseMode.MARKDOWN)
 
 async def handle_all(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     q=update.callback_query
@@ -72,15 +79,14 @@ async def handle_all(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if data=="menu_select":
         names=sorted(set([p["name"] for p in papers]))
         kb=[[InlineKeyboardButton(f"📰 {n}", callback_data=f"paper_{n}")] for n in names]
-        await q.edit_message_text(f"Select karo - Total {len(names)} papers:", reply_markup=InlineKeyboardMarkup(kb))
+        await q.edit_message_text(f"Paper chuno - Abhi + Auto dono milega:", reply_markup=InlineKeyboardMarkup(kb))
 
     elif data.startswith("paper_"):
         pname=data.replace("paper_","",1)
         ctx.user_data["paper"]=pname
         cities=sorted(set([p["city"] for p in papers if p["name"]==pname]))
         kb=[[InlineKeyboardButton(f"📍 {c}", callback_data=f"city_{c}")] for c in cities]
-        kb.append([InlineKeyboardButton("🔙 Back", callback_data="menu_select")])
-        await q.edit_message_text(f"📰 *{pname}*\nCity select karo:", reply_markup=InlineKeyboardMarkup(kb), parse_mode=ParseMode.MARKDOWN)
+        await q.edit_message_text(f"📰 *{pname}*\nCity chuno:", reply_markup=InlineKeyboardMarkup(kb), parse_mode=ParseMode.MARKDOWN)
 
     elif data.startswith("city_"):
         city=data.replace("city_","",1)
@@ -88,60 +94,55 @@ async def handle_all(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         today=datetime.datetime.now(IST).strftime("%d-%m-%Y")
         yesterday=(datetime.datetime.now(IST)-datetime.timedelta(days=1)).strftime("%d-%m-%Y")
         kb=[
-            [InlineKeyboardButton(f"📅 Aaj - {today}", callback_data=f"date_{today}")],
+            [InlineKeyboardButton(f"📥 Aaj - {today}", callback_data=f"date_{today}")],
             [InlineKeyboardButton(f"📅 Kal - {yesterday}", callback_data=f"date_{yesterday}")],
             [InlineKeyboardButton("✍️ Date Type Karo", callback_data="date_custom")],
         ]
-        await q.edit_message_text(f"📰 *{ctx.user_data.get('paper')}* | 📍 {city}\n\nDate select karo:", reply_markup=InlineKeyboardMarkup(kb), parse_mode=ParseMode.MARKDOWN)
+        await q.edit_message_text(f"📰 *{ctx.user_data.get('paper')}* | 📍 {city}\nDate chuno:", reply_markup=InlineKeyboardMarkup(kb), parse_mode=ParseMode.MARKDOWN)
 
     elif data.startswith("date_"):
         if data=="date_custom":
-            await q.edit_message_text("📅 Date is tarah type karo: `25-10-2026`\nNeeche message me likho:", parse_mode=ParseMode.MARKDOWN)
+            await q.edit_message_text("Date likho jaise `25-10-2026`", parse_mode=ParseMode.MARKDOWN)
             ctx.user_data["awaiting_date"]=True
             return
         date_str=data.replace("date_","",1)
         paper=ctx.user_data.get("paper"); city=ctx.user_data.get("city")
+        # Auto save
         custom=load_json(CUSTOM_FILE, [])
         if not any(c["name"]==paper and c["city"]==city for c in custom):
             custom.append({"name":paper,"city":city}); save_json(CUSTOM_FILE, custom)
-        await q.edit_message_text(f"✅ *{paper} | {city} | {date_str}*\n\nAaj ka paper ready hai!\n📋 MyList me save ho gaya - 6 AM auto post hoga", parse_mode=ParseMode.MARKDOWN)
-
-    elif data.startswith("lang_"):
-        lang=data.replace("lang_","",1)
-        if lang=="All": filtered=sorted(set([p["name"] for p in papers]))
-        else: filtered=sorted(set([p["name"] for p in papers if p["lang"]==lang]))
-        kb=[[InlineKeyboardButton(f"📰 {n}", callback_data=f"paper_{n}")] for n in filtered]
-        await q.edit_message_text(f"{lang} Papers ({len(filtered)}):", reply_markup=InlineKeyboardMarkup(kb))
+        # Abhi download bhi
+        await send_paper_now(q.message.chat_id, paper, city, date_str, ctx.bot)
+        await q.edit_message_text(f"✅ *{paper} | {city} | {date_str}*\n\n📥 Abhi bhej diya!\n⏰ Auto List me save ho gaya - 6 AM ko bhi ayega", parse_mode=ParseMode.MARKDOWN)
 
     elif data=="menu_mylist":
         custom=load_json(CUSTOM_FILE, [])
-        if not custom: await q.edit_message_text("❌ List khali hai. /select se add karo")
+        if not custom: await q.edit_message_text("❌ List khali hai")
         else:
-            txt="📋 *Your List:*\n" + "\n".join([f"• {c['name']} - {c['city']}" for c in custom])
+            txt="📋 *Your Auto List (6 AM):*\n" + "\n".join([f"• {c['name']} - {c['city']}" for c in custom])
             kb=[[InlineKeyboardButton("🗑️ Clear All", callback_data="clear_all")]]
             await q.edit_message_text(txt, reply_markup=InlineKeyboardMarkup(kb), parse_mode=ParseMode.MARKDOWN)
 
     elif data=="menu_mode":
         kb=[[InlineKeyboardButton("🤖 Bot Only", callback_data="mode_bot")],[InlineKeyboardButton("📢 Channel", callback_data="mode_channel")],[InlineKeyboardButton("👥 Group", callback_data="mode_group")],[InlineKeyboardButton("🚀 Channel+Group", callback_data="mode_channel+group")]]
-        await q.edit_message_text("Mode select karo:", reply_markup=InlineKeyboardMarkup(kb))
+        await q.edit_message_text("Kahan post karna hai 6 AM?", reply_markup=InlineKeyboardMarkup(kb))
 
     elif data.startswith("mode_"):
         mode=data.replace("mode_","",1); cfg=load_json(CONFIG_FILE, default_config); cfg["mode"]=mode; save_json(CONFIG_FILE, cfg)
-        await q.edit_message_text(f"✅ Mode set to *{mode}* - Ab 6 AM isi pe post hoga", parse_mode=ParseMode.MARKDOWN)
+        await q.edit_message_text(f"✅ Mode *{mode}* set! Ab {mode} pe auto ayega", parse_mode=ParseMode.MARKDOWN)
 
     elif data=="clear_all":
-        save_json(CUSTOM_FILE, []); await q.edit_message_text("🗑️ All cleared!")
+        save_json(CUSTOM_FILE, []); await q.edit_message_text("🗑️ Auto list clear!")
 
 async def text_handler(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if ctx.user_data.get("awaiting_date"):
         date_str=update.message.text.strip()
         paper=ctx.user_data.get("paper"); city=ctx.user_data.get("city")
-        if paper and city:
-            await update.message.reply_text(f"✅ *{paper} | {city} | {date_str}*\nReady! MyList me save ho gaya", parse_mode=ParseMode.MARKDOWN)
-            ctx.user_data["awaiting_date"]=False
-            custom=load_json(CUSTOM_FILE, [])
-            if not any(c["name"]==paper and c["city"]==city for c in custom):
-                custom.append({"name":paper,"city":city}); save_json(CUSTOM_FILE, custom)
+        custom=load_json(CUSTOM_FILE, [])
+        if not any(c["name"]==paper and c["city"]==city for c in custom):
+            custom.append({"name":paper,"city":city}); save_json(CUSTOM_FILE, custom)
+        await send_paper_now(update.message.chat_id, paper, city, date_str, ctx.bot)
+        ctx.user_data["awaiting_date"]=False
 
 application.add_handler(CommandHandler("start", start))
 application.add_handler(CallbackQueryHandler(handle_all))
@@ -149,7 +150,7 @@ application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_han
 
 flask_app = Flask(__name__)
 @flask_app.route('/')
-def home(): return "Bot Live - Full Version"
+def home(): return "Bot Live - Abhi + Auto Both"
 @flask_app.route('/webhook', methods=['POST'])
 def webhook():
     try:
@@ -170,7 +171,21 @@ async def init_bot():
 
 asyncio.run_coroutine_threadsafe(init_bot(), loop)
 
-def daily_job(): print("6 AM Job - Channel/Group post")
+def daily_job():
+    async def job():
+        custom=load_json(CUSTOM_FILE, [])
+        cfg=load_json(CONFIG_FILE, default_config)
+        date_str=datetime.datetime.now(IST).strftime("%d-%m-%Y")
+        for item in custom:
+            try:
+                if CHANNEL_ID and cfg["mode"] in ["channel","channel+group"]:
+                    await application.bot.send_message(chat_id=CHANNEL_ID, text=f"📰 {item['name']} | {item['city']} | {date_str}\nAuto 6 AM Post", parse_mode=ParseMode.MARKDOWN)
+                if GROUP_ID and cfg["mode"] in ["group","channel+group"]:
+                    await application.bot.send_message(chat_id=GROUP_ID, text=f"📰 {item['name']} | {item['city']} | {date_str}\nAuto 6 AM Post", parse_mode=ParseMode.MARKDOWN)
+                await asyncio.sleep(1)
+            except: continue
+    asyncio.run_coroutine_threadsafe(job(), loop)
+
 scheduler=BackgroundScheduler(timezone=IST)
 scheduler.add_job(daily_job, 'cron', hour=6, minute=0)
 scheduler.start()
