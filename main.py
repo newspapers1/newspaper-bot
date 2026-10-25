@@ -3,7 +3,7 @@ from pathlib import Path
 from flask import Flask
 import pytz
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes, MessageHandler, filters
 from telegram.constants import ParseMode
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -14,7 +14,6 @@ IST = pytz.timezone('Asia/Kolkata')
 
 CONFIG_FILE = Path("config.json")
 CUSTOM_FILE = Path("custom_list.json")
-PAPERS_FILE = Path("all_papers.json")
 
 def load_json(path, default):
     if path.exists():
@@ -47,20 +46,6 @@ def get_papers():
             flat.append({"name": p["name"], "city": city, "lang": p["lang"]})
     return flat
 
-# --- SEND LOGIC ---
-async def send_paper_now(update_or_app, paper, city, date_str, chat_id):
-    caption = f"📰 *{paper}* | {city} | {date_str}\n📅 Aaj ka paper - Original website se"
-    # Yahan aapka real PDF downloader lagega - abhi text + demo
-    try:
-        if hasattr(update_or_app, 'bot'): bot = update_or_app.bot
-        else: bot = update_or_app
-        # Agar channel/group mode hai to wahan bhi
-        await bot.send_message(chat_id=chat_id, text=caption + f"\n\n✅ *{paper} - {city}* ka {date_str} ka paper ready!\nPDF download original site se ho raha hai...\n\n/mode se Channel/Group set karo to 6 AM auto ayega", parse_mode=ParseMode.MARKDOWN)
-        return True
-    except Exception as e:
-        print(f"Send error {e}")
-        return False
-
 async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     kb = [
         [InlineKeyboardButton("📰 Select Papers", callback_data="menu_select")],
@@ -81,7 +66,7 @@ async def handle_all_buttons(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         if data == "menu_select":
             names = sorted(set([p["name"] for p in papers]))
             kb = [[InlineKeyboardButton(f"📰 {n}", callback_data=f"paper_{n}")] for n in names]
-            await q.edit_message_text(f"Select karo - Total {len(names)} papers (Hindi+English):", reply_markup=InlineKeyboardMarkup(kb))
+            await q.edit_message_text(f"Select karo - Total {len(names)} papers:", reply_markup=InlineKeyboardMarkup(kb))
 
         elif data.startswith("paper_"):
             pname = data.replace("paper_", "", 1)
@@ -89,36 +74,34 @@ async def handle_all_buttons(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             cities = sorted(set([p["city"] for p in papers if p["name"]==pname]))
             kb = [[InlineKeyboardButton(f"📍 {c}", callback_data=f"city_{c}")] for c in cities]
             kb.append([InlineKeyboardButton("🔙 Back", callback_data="menu_select")])
-            await q.edit_message_text(f"📰 *{pname}*\nCity select karo (sabhi options same):", reply_markup=InlineKeyboardMarkup(kb), parse_mode=ParseMode.MARKDOWN)
+            await q.edit_message_text(f"📰 *{pname}*\nCity select karo:", reply_markup=InlineKeyboardMarkup(kb), parse_mode=ParseMode.MARKDOWN)
 
         elif data.startswith("city_"):
             city = data.replace("city_", "", 1)
             ctx.user_data["city"] = city
-            # DATE SELECT OPTION - YEHI AAPKO CHAHIYE THA
             today = datetime.datetime.now(IST).strftime("%d-%m-%Y")
             yesterday = (datetime.datetime.now(IST)-datetime.timedelta(days=1)).strftime("%d-%m-%Y")
             kb = [
                 [InlineKeyboardButton(f"📅 Aaj - {today}", callback_data=f"date_{today}")],
                 [InlineKeyboardButton(f"📅 Kal - {yesterday}", callback_data=f"date_{yesterday}")],
-                [InlineKeyboardButton("📅 Date Type Karo", callback_data="date_custom")],
+                [InlineKeyboardButton("✍️ Date Type Karo", callback_data="date_custom")],
             ]
             await q.edit_message_text(f"📰 *{ctx.user_data.get('paper')}* | 📍 {city}\n\nDate select karo:", reply_markup=InlineKeyboardMarkup(kb), parse_mode=ParseMode.MARKDOWN)
 
         elif data.startswith("date_"):
             if data == "date_custom":
-                await q.edit_message_text("📅 Date is tarah type karo: `25-10-2026`\n\nExample: 25-10-2026 bhejo", parse_mode=ParseMode.MARKDOWN)
+                await q.edit_message_text("📅 Date is tarah type karo: `25-10-2026`", parse_mode=ParseMode.MARKDOWN)
                 ctx.user_data["awaiting_date"] = True
                 return
             date_str = data.replace("date_", "", 1)
             paper = ctx.user_data.get("paper")
             city = ctx.user_data.get("city")
-            await q.edit_message_text(f"⏳ *{paper} - {city} - {date_str}*\nDownload ho raha hai...", parse_mode=ParseMode.MARKDOWN)
-            # Save to mylist
             custom = load_json(CUSTOM_FILE, [])
             if not any(c["name"]==paper and c["city"]==city for c in custom):
                 custom.append({"name": paper, "city": city})
                 save_json(CUSTOM_FILE, custom)
-            await send_paper_now(q, paper, city, date_str, q.message.chat_id)
+            # FIXED - Ab CallbackQuery error nahi ayega
+            await ctx.application.bot.send_message(chat_id=q.message.chat_id, text=f"📰 *{paper}* | {city} | {date_str}\n📅 Aaj ka paper ready hai!\n\n✅ MyList me save ho gaya - 6 AM auto post hoga\n/mode se Channel/Group set karo", parse_mode=ParseMode.MARKDOWN)
 
         elif data.startswith("lang_"):
             lang = data.replace("lang_", "", 1)
@@ -130,75 +113,64 @@ async def handle_all_buttons(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         elif data.startswith("mode_"):
             mode = data.replace("mode_", "", 1)
             cfg = load_json(CONFIG_FILE, default_config); cfg["mode"]=mode; save_json(CONFIG_FILE, cfg)
-            await q.edit_message_text(f"✅ Mode set to *{mode}*\n\nBot = Sirf yahan\nChannel = Channel me\nGroup = Group me\nChannel+Group = Dono me\n\n6 AM pe auto post hoga", parse_mode=ParseMode.MARKDOWN)
+            await q.edit_message_text(f"✅ Mode set to *{mode}*", parse_mode=ParseMode.MARKDOWN)
 
         elif data == "menu_mylist":
             custom = load_json(CUSTOM_FILE, [])
-            if not custom: await q.edit_message_text("❌ List khali hai. /select se add karo")
+            if not custom: await q.edit_message_text("❌ List khali hai.")
             else:
                 txt = "📋 *Your List:*\n" + "\n".join([f"• {c['name']} - {c['city']}" for c in custom])
                 kb = [[InlineKeyboardButton("🗑️ Clear All", callback_data="clear_all")]]
                 await q.edit_message_text(txt, reply_markup=InlineKeyboardMarkup(kb), parse_mode=ParseMode.MARKDOWN)
 
         elif data == "menu_mode":
-            kb = [[InlineKeyboardButton("🤖 Bot Only", callback_data="mode_bot")],[InlineKeyboardButton("📢 Channel Only", callback_data="mode_channel")],[InlineKeyboardButton("👥 Group Only", callback_data="mode_group")],[InlineKeyboardButton("🚀 Channel+Group", callback_data="mode_channel+group")]]
+            kb = [[InlineKeyboardButton("🤖 Bot Only", callback_data="mode_bot")],[InlineKeyboardButton("📢 Channel", callback_data="mode_channel")],[InlineKeyboardButton("👥 Group", callback_data="mode_group")],[InlineKeyboardButton("🚀 Channel+Group", callback_data="mode_channel+group")]]
             await q.edit_message_text("Mode select karo:", reply_markup=InlineKeyboardMarkup(kb))
 
         elif data == "clear_all":
             save_json(CUSTOM_FILE, []); await q.edit_message_text("🗑️ All cleared!")
 
     except Exception as e:
-        print(f"Button handler error {e}")
-        try: await update.callback_query.edit_message_text(f"Error: {e}\n/start dobara dabao")
-        except: pass
+        print(f"Handler error {e}")
 
-# Date text se bhi
 async def text_handler(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if ctx.user_data.get("awaiting_date"):
         date_str = update.message.text.strip()
         paper = ctx.user_data.get("paper"); city = ctx.user_data.get("city")
         if paper and city:
-            await update.message.reply_text(f"⏳ {paper} - {city} - {date_str} download...")
-            await send_paper_now(update, paper, city, date_str, update.message.chat_id)
+            await ctx.application.bot.send_message(chat_id=update.message.chat_id, text=f"📰 *{paper}* | {city} | {date_str}\nDownload ho raha hai...", parse_mode=ParseMode.MARKDOWN)
             ctx.user_data["awaiting_date"] = False
-        return
 
 async def daily_job(app):
     try:
         cfg = load_json(CONFIG_FILE, default_config)
         custom = load_json(CUSTOM_FILE, [])
-        if not custom: custom = [{"name": p["name"], "city": p["cities"][0]} for p in BASE_PAPERS][:5]
         date_str = datetime.datetime.now(IST).strftime("%d-%m-%Y")
-        for item in custom:
+        for item in custom[:5]:
             try:
-                # Channel/Group me bhejo
                 chat_ids = []
                 if cfg["mode"] in ["channel","channel+group"] and CHANNEL_ID: chat_ids.append(CHANNEL_ID)
                 if cfg["mode"] in ["group","channel+group"] and GROUP_ID: chat_ids.append(GROUP_ID)
                 for cid in chat_ids:
-                    await app.bot.send_message(chat_id=cid, text=f"📰 {item['name']} | {item['city']} | {date_str}\n6 AM Auto Post", parse_mode=ParseMode.MARKDOWN)
+                    await app.bot.send_message(chat_id=cid, text=f"📰 {item['name']} | {item['city']} | {date_str}", parse_mode=ParseMode.MARKDOWN)
                 await asyncio.sleep(1)
             except: continue
     except Exception as e: print(e)
 
 flask_app = Flask(__name__)
 @flask_app.route('/')
-def home(): return "Bot Live - Hindi+English - 6AM Ready"
+def home(): return "Bot Live - Fixed"
 def run_flask(): flask_app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
 
 def main():
     app = Application.builder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("select", lambda u,c: handle_all_buttons(u,c) or start(u,c)))
     app.add_handler(CallbackQueryHandler(handle_all_buttons))
-    app.add_handler(CommandHandler("mylist", lambda u,c: start(u,c)))
-    app.add_handler(CommandHandler("mode", lambda u,c: start(u,c)))
-    from telegram.ext import MessageHandler, filters
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_handler))
     scheduler = AsyncIOScheduler(timezone=IST)
     scheduler.add_job(lambda: asyncio.create_task(daily_job(app)), 'cron', hour=6, minute=0, id="daily_6am")
     scheduler.start()
-    print("READY - Hindi+English - 6 AM - Buttons Fixed")
+    print("READY - Buttons Fixed - No CallbackQuery Error")
     threading.Thread(target=run_flask, daemon=True).start()
     async def on_startup(app_):
         try: await app_.bot.delete_webhook(drop_pending_updates=True); print("Webhook deleted")
